@@ -1,3 +1,11 @@
+import sys
+from pathlib import Path
+
+# Ensure 'src' is in sys.path so cli.py runs seamlessly whether invoked directly or as a module
+src_dir = str(Path(__file__).resolve().parent.parent)
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
+
 import boto3
 import httpx
 import typer
@@ -8,8 +16,12 @@ from sqlalchemy import text
 
 from app.core.config import get_settings
 from app.core.security import hash_password
-from app.db.models import Department, Membership, User
+from app.db.models import Chunk, Department, Document, Membership, User
 from app.db.session import SessionLocal, engine
+from app.ingestion.pipeline import IngestionPipeline
+from app.providers.embeddings.jina import JinaEmbeddingProvider
+from app.providers.sparse.fastembed_bm25 import FastEmbedBM25Provider
+from app.providers.vectorstore.qdrant import QdrantVectorStore
 from app.services.qdrant_init import init_qdrant_collection
 
 app = typer.Typer(help="Enterprise RAG CLI management tool")
@@ -96,22 +108,18 @@ def doctor():
     except Exception as e:
         results.append(("Jina API", f"Failed: {e}", "red"))
 
-    # 5. Groq LLM API
+    # 5. Groq LLM API (LangChain ChatGroq)
     try:
         if settings.GROQ_API_KEY:
-            res = httpx.get(
-                "https://api.groq.com/openai/v1/models",
-                headers={"Authorization": f"Bearer {settings.GROQ_API_KEY}"},
-                timeout=5,
-            )
-            if res.status_code == 200:
-                results.append((f"Groq API ({settings.GROQ_MODEL})", "Connected & Authorized", "green"))
-            else:
-                results.append(("Groq API", f"Status {res.status_code}: {res.text[:100]}", "red"))
+            from app.providers.llm import get_chat_model
+
+            chat_model = get_chat_model()
+            _ = chat_model.invoke("ping")
+            results.append((f"LangChain ChatGroq ({settings.GROQ_MODEL})", "Connected & Operational", "green"))
         else:
-            results.append(("Groq API", "Missing GROQ_API_KEY", "yellow"))
+            results.append(("LangChain ChatGroq", "Missing GROQ_API_KEY", "yellow"))
     except Exception as e:
-        results.append(("Groq API", f"Failed: {e}", "red"))
+        results.append(("LangChain ChatGroq", f"Failed: {e}", "red"))
 
     table = Table(title="Enterprise RAG System Connectivity (Doctor)")
     table.add_column("Service", style="cyan", no_wrap=True)
@@ -208,6 +216,142 @@ def seed():
         db.rollback()
         console.print(f"[red]Error during database seeding: {e}[/red]")
         raise typer.Exit(code=1)
+    finally:
+        db.close()
+
+
+@app.command()
+def ingest(folder: str = typer.Option("../data/sample_docs", help="Path to documents folder with manifest.yaml")):
+    """Run document ingestion pipeline over folder."""
+    db = SessionLocal()
+    try:
+        target_path = Path(folder).resolve()
+        if not target_path.exists():
+            console.print(f"[red]Folder not found: {target_path}[/red]")
+            raise typer.Exit(code=1)
+
+        console.print(f"[cyan]Starting ingestion for folder: {target_path}[/cyan]")
+        pipeline = IngestionPipeline(db)
+        job = pipeline.run_folder_ingestion(target_path)
+
+        table = Table(title="Ingestion Job Report")
+        table.add_column("Metric", style="cyan")
+        table.add_column("Count", style="bold")
+
+        for k, v in (job.summary or {}).items():
+            table.add_row(k.capitalize(), str(v))
+
+        console.print(table)
+        console.print(f"[green]Ingestion job {job.id} completed with status: {job.status}[/green]")
+    finally:
+        db.close()
+
+
+@app.command()
+def reindex():
+    """Rebuild Qdrant collection from Neon chunks (re-embedding all text)."""
+    db = SessionLocal()
+    try:
+        console.print("[cyan]Re-indexing all active chunks from Neon to Qdrant...[/cyan]")
+        # 1. Reset collection
+        init_qdrant_collection()
+
+        vector_store = QdrantVectorStore()
+        embedder = JinaEmbeddingProvider()
+        sparser = FastEmbedBM25Provider()
+
+        chunks = (
+            db.query(Chunk).join(Document, Chunk.document_id == Document.id).filter(Document.status == "active").all()
+        )
+
+        if not chunks:
+            console.print("[yellow]No active chunks found in database to re-index.[/yellow]")
+            return
+
+        console.print(f"Found [bold]{len(chunks)}[/bold] active chunks. Computing embeddings...")
+
+        chunk_texts = [c.text for c in chunks]
+        # pyrefly: ignore[bad-argument-type]
+        dense_vectors = embedder.embed_documents(chunk_texts)
+        # pyrefly: ignore[bad-argument-type]
+        sparse_vectors = sparser.embed_documents(chunk_texts)
+
+        qdrant_points = []
+        for i, c in enumerate(chunks):
+            doc = c.document
+            eff_ts = int(doc.effective_date.timestamp()) if doc.effective_date else 0
+            exp_ts = int(doc.expiration_date.timestamp()) if doc.expiration_date else 253402300799
+
+            qdrant_points.append(
+                {
+                    "id": c.qdrant_point_id,
+                    "dense": dense_vectors[i],
+                    "sparse": sparse_vectors[i],
+                    "payload": {
+                        "chunk_id": str(c.id),
+                        "document_id": str(doc.id),
+                        "department_id": str(doc.department_id),
+                        "visibility": doc.visibility,
+                        "min_role_level": doc.min_role_level,
+                        "status": doc.status,
+                        "effective_ts": eff_ts,
+                        "expiry_ts": exp_ts,
+                        "version": doc.version,
+                        "doc_title": doc.title,
+                        "section": c.section,
+                        "page_start": c.page_start,
+                        "page_end": c.page_end,
+                        "text": c.text,
+                    },
+                }
+            )
+
+        vector_store.upsert_points(qdrant_points)
+        console.print("[green]Re-index completed successfully![/green]")
+    finally:
+        db.close()
+
+
+@app.command()
+def reconcile():
+    """Compare chunks stored in Neon vs points indexed in Qdrant."""
+    db = SessionLocal()
+    try:
+        console.print("[cyan]Checking synchronization between Neon and Qdrant...[/cyan]")
+        vector_store = QdrantVectorStore()
+        qdrant_point_ids = set(vector_store.get_indexed_point_ids())
+
+        neon_chunks = (
+            db.query(Chunk).join(Document, Chunk.document_id == Document.id).filter(Document.status == "active").all()
+        )
+        neon_chunk_point_ids = {c.qdrant_point_id for c in neon_chunks if c.qdrant_point_id}
+
+        in_neon_not_qdrant = neon_chunk_point_ids - qdrant_point_ids
+        in_qdrant_not_neon = qdrant_point_ids - neon_chunk_point_ids
+
+        table = Table(title="Store Reconciliation Report")
+        table.add_column("Store", style="cyan")
+        table.add_column("Count", style="bold")
+        table.add_column("Status")
+
+        table.add_row("Neon Active Chunks", str(len(neon_chunk_point_ids)), "Source of Truth")
+        table.add_row("Qdrant Indexed Points", str(len(qdrant_point_ids)), "Search Index")
+        table.add_row(
+            "Neon Chunks Missing in Qdrant",
+            str(len(in_neon_not_qdrant)),
+            "[green]None[/green]" if not in_neon_not_qdrant else "[red]Drift detected[/red]",
+        )
+        table.add_row(
+            "Qdrant Points Missing in Neon",
+            str(len(in_qdrant_not_neon)),
+            "[green]None[/green]" if not in_qdrant_not_neon else "[red]Orphan points[/red]",
+        )
+
+        console.print(table)
+        if in_neon_not_qdrant or in_qdrant_not_neon:
+            console.print("[yellow]Drift detected. Run 'python -m app.cli reindex' to synchronize.[/yellow]")
+        else:
+            console.print("[green]Stores are perfectly synchronized![/green]")
     finally:
         db.close()
 
