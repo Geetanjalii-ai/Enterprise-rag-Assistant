@@ -18,10 +18,12 @@ from app.core.config import get_settings
 from app.core.security import hash_password
 from app.db.models import Chunk, Department, Document, Membership, User
 from app.db.session import SessionLocal, engine
+from app.generation.answer_service import AnswerService
 from app.ingestion.pipeline import IngestionPipeline
 from app.providers.embeddings.jina import JinaEmbeddingProvider
 from app.providers.sparse.fastembed_bm25 import FastEmbedBM25Provider
 from app.providers.vectorstore.qdrant import QdrantVectorStore
+from app.retrieval.hybrid_search import HybridSearchService
 from app.services.qdrant_init import init_qdrant_collection
 
 app = typer.Typer(help="Enterprise RAG CLI management tool")
@@ -352,6 +354,110 @@ def reconcile():
             console.print("[yellow]Drift detected. Run 'python -m app.cli reindex' to synchronize.[/yellow]")
         else:
             console.print("[green]Stores are perfectly synchronized![/green]")
+    finally:
+        db.close()
+
+
+@app.command()
+def search(
+    query: str,
+    as_user: str = typer.Option("employee@company.com", "--as", help="Email of the user to search as"),
+    limit: int = typer.Option(5, "--limit", "-k", help="Maximum chunks to retrieve"),
+):
+    """Run role-aware hybrid retrieval with department ACL filters and second-lock validation."""
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.email == as_user).first()
+        if not user:
+            console.print(f"[red]User '{as_user}' not found in database. Run 'python -m app.cli seed' first.[/red]")
+            raise typer.Exit(code=1)
+
+        memberships_desc = ", ".join([f"{m.department.code}:L{m.role_level}" for m in user.memberships]) or "None"
+        console.print(f"[cyan]Searching as:[/cyan] [bold]{user.email}[/bold] (Admin: {user.is_admin}, Roles: [{memberships_desc}])")
+        console.print(f"[cyan]Query:[/cyan] \"{query}\"")
+
+        service = HybridSearchService(db=db)
+        results = service.search(query=query, user=user, limit=limit)
+
+        if not results:
+            console.print("[yellow]No authorized documents found matching your query.[/yellow]")
+            return
+
+        table = Table(title=f"Retrieved Chunks for {user.email}")
+        table.add_column("#", style="dim", width=4)
+        table.add_column("Document", style="cyan", max_width=30)
+        table.add_column("Section", style="green", max_width=25)
+        table.add_column("Page", style="magenta", width=8)
+        table.add_column("Score", style="yellow", width=8)
+        table.add_column("Preview", style="white", max_width=50)
+
+        for i, item in enumerate(results, 1):
+            payload = item.get("payload", {})
+            score = item.get("rerank_score", item.get("score", 0.0))
+            text = payload.get("text", "").replace("\n", " ")[:100] + "..."
+            p_start = payload.get("page_start", "")
+            p_end = payload.get("page_end", "")
+            page_str = f"{p_start}" if p_start == p_end or not p_end else f"{p_start}-{p_end}"
+
+            table.add_row(
+                str(i),
+                payload.get("doc_title", "Untitled"),
+                payload.get("section", "-") or "-",
+                page_str or "-",
+                f"{score:.4f}" if isinstance(score, float) else str(score),
+                text,
+            )
+
+        console.print(table)
+    finally:
+        db.close()
+
+
+@app.command()
+def ask(
+    query: str,
+    as_user: str = typer.Option("employee@company.com", "--as", help="Email of the user asking the question"),
+    limit: int = typer.Option(5, "--limit", "-k", help="Maximum context chunks to retrieve"),
+):
+    """Generate a role-aware grounded RAG answer with citations and audit logging."""
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.email == as_user).first()
+        if not user:
+            console.print(f"[red]User '{as_user}' not found in database. Run 'python -m app.cli seed' first.[/red]")
+            raise typer.Exit(code=1)
+
+        memberships_desc = ", ".join([f"{m.department.code}:L{m.role_level}" for m in user.memberships]) or "None"
+        console.print(f"[cyan]Asking as:[/cyan] [bold]{user.email}[/bold] (Admin: {user.is_admin}, Roles: [{memberships_desc}])")
+        console.print(f"[cyan]Question:[/cyan] \"{query}\"\n")
+
+        answer_service = AnswerService(db=db)
+        rag_answer = answer_service.generate_answer(question=query, user=user, top_k=limit)
+
+        console.print(f"[bold green]Answer ({rag_answer.model_used}):[/bold green]")
+        console.print(f"{rag_answer.answer}\n")
+
+        if rag_answer.citations:
+            table = Table(title="Citations")
+            table.add_column("Ref", style="bold cyan", width=6)
+            table.add_column("Document", style="white")
+            table.add_column("Section", style="green")
+            table.add_column("Page", style="magenta")
+
+            for c in rag_answer.citations:
+                p_start = c.get("page_start")
+                p_end = c.get("page_end")
+                page_str = f"{p_start}" if p_start == p_end or not p_end else f"{p_start}-{p_end}"
+                table.add_row(
+                    f"[{c.get('citation_number')}]",
+                    c.get("document_title", "-"),
+                    c.get("section", "-") or "-",
+                    page_str or "-",
+                )
+            console.print(table)
+        else:
+            console.print(f"[dim]Outcome: {rag_answer.outcome}[/dim]")
+
     finally:
         db.close()
 

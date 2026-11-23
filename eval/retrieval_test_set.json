@@ -1,0 +1,243 @@
+[
+  {
+    "id": "q1",
+    "query": "What are the engineering on call rotation expectations and allowances?",
+    "department": "ENGINEERING",
+    "authorized_roles": ["employee@company.com", "admin@company.com"],
+    "unauthorized_roles": ["finance_member@company.com"],
+    "target_doc": "On-Call Handbook"
+  },
+  {
+    "id": "q2",
+    "query": "What is the code review turnaround expectation?",
+    "department": "ENGINEERING",
+    "authorized_roles": ["employee@company.com", "admin@company.com"],
+    "unauthorized_roles": [],
+    "target_doc": "Code Review Guidelines"
+  },
+  {
+    "id": "q3",
+    "query": "What are the fixed annual salary bands for software engineers?",
+    "department": "HR",
+    "confidential": true,
+    "authorized_roles": ["hr_head@company.com", "admin@company.com"],
+    "unauthorized_roles": ["employee@company.com", "finance_member@company.com", "it_member@company.com"],
+    "target_doc": "Salary Bands 2026"
+  },
+  {
+    "id": "q4",
+    "query": "What is the disciplinary procedure for misconduct?",
+    "department": "HR",
+    "authorized_roles": ["hr_member@company.com", "hr_head@company.com", "admin@company.com"],
+    "unauthorized_roles": ["employee@company.com"],
+    "target_doc": "Disciplinary Procedure"
+  },
+  {
+    "id": "q5",
+    "query": "How many days of annual leave do employees receive per year?",
+    "department": "HR",
+    "authorized_roles": ["employee@company.com", "hr_member@company.com", "finance_member@company.com"],
+    "unauthorized_roles": [],
+    "target_doc": "Leave Policy v3.1"
+  },
+  {
+    "id": "q6",
+    "query": "What is the budget approval threshold for a department manager?",
+    "department": "FINANCE",
+    "authorized_roles": ["finance_mgr@company.com", "admin@company.com"],
+    "unauthorized_roles": ["employee@company.com", "hr_member@company.com"],
+    "target_doc": "Budget Approval Matrix"
+  },
+  {
+    "id": "q7",
+    "query": "What is the daily domestic meal allowance for business travel?",
+    "department": "FINANCE",
+    "authorized_roles": ["employee@company.com", "finance_member@company.com", "admin@company.com"],
+    "unauthorized_roles": [],
+    "target_doc": "Travel Policy"
+  },
+  {
+    "id": "q8",
+    "query": "What are the IT helpdesk support hours and contact info?",
+    "department": "IT",
+    "authorized_roles": ["employee@company.com", "it_member@company.com", "admin@company.com"],
+    "unauthorized_roles": [],
+    "target_doc": "IT Helpdesk FAQ"
+  },
+  {
+    "id": "q9",
+    "query": "How do administrators create or deprovision user accounts in Active Directory?",
+    "department": "IT",
+    "authorized_roles": ["it_member@company.com", "admin@company.com"],
+    "unauthorized_roles": ["employee@company.com", "finance_member@company.com"],
+    "target_doc": "Admin Runbook - User Accounts"
+  },
+  {
+    "id": "q10",
+    "query": "What are the company paid holidays for 2026?",
+    "department": "HR",
+    "authorized_roles": ["employee@company.com", "finance_member@company.com", "hr_member@company.com"],
+    "unauthorized_roles": [],
+    "target_doc": "Holiday Calendar 2026"
+  },
+  {
+    "id": "q11",
+    "query": "What is the sales commission structure for closing enterprise deals?",
+    "department": "SALES",
+    "authorized_roles": ["admin@company.com"],
+    "unauthorized_roles": ["employee@company.com", "hr_member@company.com"],
+    "target_doc": "Sales Commission Plan"
+  },
+  {
+    "id": "q12",
+    "query": "What discounts require VP Sales or Finance approval?",
+    "department": "SALES",
+    "authorized_roles": ["admin@company.com"],
+    "unauthorized_roles": ["employee@company.com"],
+    "target_doc": "Discount Approval Policy"
+  },
+  {
+    "id": "q13",
+    "query": "What is Meridian's core company mission and history?",
+    "department": "HR",
+    "authorized_roles": ["employee@company.com", "hr_member@company.com"],
+    "unauthorized_roles": [],
+    "target_doc": "About Meridian"
+  },
+  {
+    "id": "q14",
+    "query": "What constitutes a reportable POSH incident under company policy?",
+    "department": "HR",
+    "authorized_roles": ["employee@company.com", "hr_member@company.com"],
+    "unauthorized_roles": [],
+    "target_doc": "POSH Policy"
+  },
+  {
+    "id": "q15",
+    "query": "What is the procedure for reporting a suspected cybersecurity incident?",
+    "department": "IT",
+    "authorized_roles": ["employee@company.com", "it_member@company.com"],
+    "unauthorized_roles": [],
+    "target_doc": "Incident Response Plan"
+  },
+  {
+    "id": "q16",
+    "query": "What are the password complexity requirements and MFA setup procedures?",
+    "department": "IT",
+    "authorized_roles": ["employee@company.com", "it_member@company.com"],
+    "unauthorized_roles": [],
+    "target_doc": "Password & MFA Guide"
+  },
+  {
+    "id": "q17",
+    "query": "How does an employee connect to the corporate WireGuard VPN?",
+    "department": "IT",
+    "authorized_roles": ["employee@company.com", "it_member@company.com"],
+    "unauthorized_roles": [],
+    "target_doc": "VPN Setup Guide"
+  },
+  {
+    "id": "q18",
+    "query": "What is the laptop replacement refresh cycle and process?",
+    "department": "IT",
+    "authorized_roles": ["employee@company.com", "it_member@company.com"],
+    "unauthorized_roles": [],
+    "target_doc": "Laptop Request & Replacement Process"
+  },
+  {
+    "id": "q19",
+    "query": "What are the rules for submitting expense reimbursements and receipt deadlines?",
+    "department": "FINANCE",
+    "authorized_roles": ["employee@company.com", "finance_member@company.com"],
+    "unauthorized_roles": [],
+    "target_doc": "Expense Reimbursement Policy"
+  },
+  {
+    "id": "q20",
+    "query": "What documentation is required to onboard a new vendor for invoicing?",
+    "department": "FINANCE",
+    "authorized_roles": ["finance_member@company.com", "admin@company.com"],
+    "unauthorized_roles": ["employee@company.com"],
+    "target_doc": "Vendor Payment Procedure"
+  },
+  {
+    "id": "q21",
+    "query": "What are the guidelines and core working hours for working from home?",
+    "department": "HR",
+    "authorized_roles": ["employee@company.com", "hr_member@company.com"],
+    "unauthorized_roles": [],
+    "target_doc": "Work From Home Policy"
+  },
+  {
+    "id": "q22",
+    "query": "What is the rating scale used during annual performance appraisals?",
+    "department": "HR",
+    "authorized_roles": ["employee@company.com", "hr_member@company.com"],
+    "unauthorized_roles": [],
+    "target_doc": "Performance Review Guide"
+  },
+  {
+    "id": "q23",
+    "query": "What are the stages and structured questions for conducting technical candidate interviews?",
+    "department": "HR",
+    "authorized_roles": ["hr_member@company.com", "admin@company.com"],
+    "unauthorized_roles": ["finance_member@company.com"],
+    "target_doc": "Hiring & Interview Guidelines"
+  },
+  {
+    "id": "q24",
+    "query": "What health insurance coverage and parental leave benefits are offered?",
+    "department": "HR",
+    "authorized_roles": ["employee@company.com", "hr_member@company.com"],
+    "unauthorized_roles": [],
+    "target_doc": "Employee Benefits FAQ"
+  },
+  {
+    "id": "q25",
+    "query": "What is the onboarding checklist for a new joiner's first week?",
+    "department": "HR",
+    "authorized_roles": ["employee@company.com", "hr_member@company.com"],
+    "unauthorized_roles": [],
+    "target_doc": "Onboarding Checklist"
+  },
+  {
+    "id": "q26",
+    "query": "What gifts or entertainment hospitality are acceptable under the code of conduct?",
+    "department": "HR",
+    "authorized_roles": ["employee@company.com", "hr_member@company.com"],
+    "unauthorized_roles": [],
+    "target_doc": "Code of Conduct"
+  },
+  {
+    "id": "q27",
+    "query": "What acceptable use restrictions apply to company-owned devices?",
+    "department": "IT",
+    "authorized_roles": ["employee@company.com", "it_member@company.com"],
+    "unauthorized_roles": [],
+    "target_doc": "Acceptable Use & Security Policy"
+  },
+  {
+    "id": "q28",
+    "query": "What was announced regarding the Q3 engineering reorganisation?",
+    "department": "ENGINEERING",
+    "authorized_roles": ["employee@company.com", "admin@company.com"],
+    "unauthorized_roles": [],
+    "target_doc": "Announcement: Engineering Reorganisation"
+  },
+  {
+    "id": "q29",
+    "query": "What is the standard payment terms timeline for approved vendor invoices?",
+    "department": "FINANCE",
+    "authorized_roles": ["finance_member@company.com", "admin@company.com"],
+    "unauthorized_roles": ["employee@company.com"],
+    "target_doc": "Vendor Payment Procedure"
+  },
+  {
+    "id": "q30",
+    "query": "Can an employee request an advance on salary or travel allowance?",
+    "department": "FINANCE",
+    "authorized_roles": ["employee@company.com", "finance_member@company.com"],
+    "unauthorized_roles": [],
+    "target_doc": "Expense Reimbursement Policy"
+  }
+]
