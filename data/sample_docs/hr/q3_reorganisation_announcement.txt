@@ -1,0 +1,26 @@
+ANNOUNCEMENT: ENGINEERING REORGANISATION FROM 1 AUGUST 2026
+Meridian Software Services Pvt. Ltd.
+
+Document ID: HR-ANN-014
+Version: 1.0
+Effective date: 2026-07-15
+Owner: Office of the CEO
+Applies to: All employees
+
+Date: 15 July 2026. From: Office of the CEO.
+
+WHAT IS CHANGING
+
+From 1 August 2026 the Engineering department will be organised into two units: Platform Engineering, which owns cloud infrastructure, internal tooling and reliability, and Product Engineering, which owns customer-facing products.
+
+WHAT IS NOT CHANGING
+
+  - There are no role eliminations or salary changes as part of this reorganisation.
+  - Existing leave balances, benefits and the on-call rotation continue as they are.
+  - Departments other than Engineering are not affected.
+
+WHAT HAPPENS NEXT
+
+  1. Each employee in Engineering will be told their new unit and reporting manager by 24 July 2026.
+  2. HR drop-in sessions will be held from 20 to 22 July in the Pune and Bengaluru offices.
+  3. Questions can be sent to hr@meridian.example.

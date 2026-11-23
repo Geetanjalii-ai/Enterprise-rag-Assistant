@@ -1,0 +1,44 @@
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node and React
+node_modules/
+dist/
+build/
+.vite/
+*.local
+
+# Local data and caches (sample documents in data/sample_docs/ ARE committed)
+data/uploads/
+qdrant_local/
+.fastembed_cache/
+fastembed_cache/
+.cache/
+*.sqlite3
+*.log
+logs/
+
+# Editors and operating systems
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Docker overrides (Phase 6)
+docker-compose.override.yml

@@ -1,0 +1,313 @@
+# Labels for every document in this folder.
+# department: owning department (HR, Finance, IT, Engineering, Sales)
+# visibility: company (any employee passes the department check) or department (members only)
+# min_role: member, manager or head
+# expiration_date: empty means the document does not expire
+- file: hr/leave_policy_v3.1.pdf
+  title: Leave Policy
+  doc_id: HR-POL-001
+  department: HR
+  doc_type: policy
+  visibility: company
+  min_role: member
+  version: '3.1'
+  effective_date: '2026-04-01'
+  expiration_date: null
+  owner: Human Resources
+- file: hr/holiday_calendar_2026.docx
+  title: Holiday Calendar 2026
+  doc_id: HR-CAL-001
+  department: HR
+  doc_type: calendar
+  visibility: company
+  min_role: member
+  version: '1.0'
+  effective_date: '2026-01-01'
+  expiration_date: null
+  owner: Human Resources
+- file: hr/code_of_conduct.pdf
+  title: Code of Conduct
+  doc_id: HR-POL-002
+  department: HR
+  doc_type: policy
+  visibility: company
+  min_role: member
+  version: '2.0'
+  effective_date: '2025-07-01'
+  expiration_date: null
+  owner: Human Resources
+- file: hr/posh_policy.pdf
+  title: Anti-Harassment (POSH) Policy
+  doc_id: HR-POL-003
+  department: HR
+  doc_type: policy
+  visibility: company
+  min_role: member
+  version: '1.4'
+  effective_date: '2025-01-01'
+  expiration_date: null
+  owner: Human Resources
+- file: hr/work_from_home_policy.docx
+  title: Work From Home Policy
+  doc_id: HR-POL-004
+  department: HR
+  doc_type: policy
+  visibility: company
+  min_role: member
+  version: '2.2'
+  effective_date: '2026-02-01'
+  expiration_date: null
+  owner: Human Resources
+- file: hr/employee_benefits_faq.md
+  title: Employee Benefits FAQ
+  doc_id: HR-FAQ-001
+  department: HR
+  doc_type: faq
+  visibility: company
+  min_role: member
+  version: '1.3'
+  effective_date: '2026-04-01'
+  expiration_date: null
+  owner: Human Resources
+- file: hr/onboarding_checklist.docx
+  title: New Joiner Onboarding Checklist
+  doc_id: HR-CHK-001
+  department: HR
+  doc_type: checklist
+  visibility: company
+  min_role: member
+  version: '1.1'
+  effective_date: '2026-01-15'
+  expiration_date: null
+  owner: Human Resources
+- file: hr/about_meridian.md
+  title: 'About Meridian: Company Overview'
+  doc_id: HR-OVR-001
+  department: HR
+  doc_type: overview
+  visibility: company
+  min_role: member
+  version: '1.0'
+  effective_date: '2026-01-01'
+  expiration_date: null
+  owner: Human Resources
+- file: hr/q3_reorganisation_announcement.txt
+  title: 'Announcement: Engineering Reorganisation from 1 August 2026'
+  doc_id: HR-ANN-014
+  department: HR
+  doc_type: announcement
+  visibility: company
+  min_role: member
+  version: '1.0'
+  effective_date: '2026-07-15'
+  expiration_date: null
+  owner: Office of the CEO
+- file: hr/performance_review_guide.pdf
+  title: Performance Review Guide for Managers
+  doc_id: HR-GDE-001
+  department: HR
+  doc_type: guideline
+  visibility: company
+  min_role: manager
+  version: '2.1'
+  effective_date: '2026-03-01'
+  expiration_date: null
+  owner: Human Resources
+- file: hr/hiring_interview_guidelines.docx
+  title: Hiring and Interview Guidelines
+  doc_id: HR-GDE-002
+  department: HR
+  doc_type: guideline
+  visibility: company
+  min_role: manager
+  version: '1.5'
+  effective_date: '2026-02-01'
+  expiration_date: null
+  owner: Human Resources
+- file: hr/salary_bands_2026.docx
+  title: Salary Bands 2026
+  doc_id: HR-TBL-001
+  department: HR
+  doc_type: table
+  visibility: department
+  min_role: member
+  version: '1.0'
+  effective_date: '2026-01-01'
+  expiration_date: null
+  owner: Human Resources
+- file: hr/disciplinary_procedure.pdf
+  title: Disciplinary Procedure
+  doc_id: HR-PRO-001
+  department: HR
+  doc_type: procedure
+  visibility: department
+  min_role: manager
+  version: '1.2'
+  effective_date: '2025-09-01'
+  expiration_date: null
+  owner: Human Resources
+- file: finance/expense_reimbursement_policy.pdf
+  title: Expense Reimbursement Policy
+  doc_id: FIN-POL-001
+  department: Finance
+  doc_type: policy
+  visibility: company
+  min_role: member
+  version: '4.0'
+  effective_date: '2026-01-01'
+  expiration_date: null
+  owner: Finance
+- file: finance/travel_policy.docx
+  title: Travel Policy
+  doc_id: FIN-POL-002
+  department: Finance
+  doc_type: policy
+  visibility: company
+  min_role: member
+  version: '2.3'
+  effective_date: '2026-01-01'
+  expiration_date: null
+  owner: Finance
+- file: finance/budget_approval_matrix.docx
+  title: Budget Approval Matrix
+  doc_id: FIN-TBL-001
+  department: Finance
+  doc_type: table
+  visibility: department
+  min_role: manager
+  version: '2.0'
+  effective_date: '2026-01-01'
+  expiration_date: null
+  owner: Finance
+- file: finance/vendor_payment_procedure.pdf
+  title: Vendor Payment Procedure
+  doc_id: FIN-SOP-001
+  department: Finance
+  doc_type: procedure
+  visibility: department
+  min_role: member
+  version: '1.6'
+  effective_date: '2025-11-01'
+  expiration_date: null
+  owner: Finance
+- file: it/acceptable_use_security_policy.pdf
+  title: Acceptable Use and Information Security Policy
+  doc_id: IT-POL-001
+  department: IT
+  doc_type: policy
+  visibility: company
+  min_role: member
+  version: '3.0'
+  effective_date: '2026-01-01'
+  expiration_date: null
+  owner: Information Technology
+- file: it/password_mfa_guide.md
+  title: Password and Multi-Factor Authentication Guide
+  doc_id: IT-HOW-001
+  department: IT
+  doc_type: how-to
+  visibility: company
+  min_role: member
+  version: '2.1'
+  effective_date: '2026-03-01'
+  expiration_date: null
+  owner: Information Technology
+- file: it/vpn_setup_guide.md
+  title: VPN Setup Guide
+  doc_id: IT-HOW-002
+  department: IT
+  doc_type: how-to
+  visibility: company
+  min_role: member
+  version: '1.4'
+  effective_date: '2025-10-01'
+  expiration_date: null
+  owner: Information Technology
+- file: it/it_helpdesk_faq.md
+  title: IT Helpdesk FAQ
+  doc_id: IT-FAQ-001
+  department: IT
+  doc_type: faq
+  visibility: company
+  min_role: member
+  version: '1.8'
+  effective_date: '2026-05-01'
+  expiration_date: null
+  owner: Information Technology
+- file: it/laptop_request_replacement_process.docx
+  title: Laptop Request and Replacement Process
+  doc_id: IT-PRO-001
+  department: IT
+  doc_type: procedure
+  visibility: company
+  min_role: member
+  version: '1.2'
+  effective_date: '2026-02-01'
+  expiration_date: null
+  owner: Information Technology
+- file: it/admin_runbook_user_accounts.md
+  title: 'Admin Runbook: User Account Management'
+  doc_id: IT-RUN-001
+  department: IT
+  doc_type: runbook
+  visibility: department
+  min_role: member
+  version: '1.1'
+  effective_date: '2026-01-10'
+  expiration_date: null
+  owner: Information Technology
+- file: it/incident_response_plan.pdf
+  title: Information Security Incident Response Plan
+  doc_id: IT-PLN-001
+  department: IT
+  doc_type: plan
+  visibility: department
+  min_role: manager
+  version: '2.0'
+  effective_date: '2026-02-01'
+  expiration_date: null
+  owner: Information Technology
+- file: engineering/code_review_guidelines.md
+  title: Code Review Guidelines
+  doc_id: ENG-GDE-001
+  department: Engineering
+  doc_type: guideline
+  visibility: department
+  min_role: member
+  version: '1.3'
+  effective_date: '2026-01-01'
+  expiration_date: null
+  owner: Engineering
+- file: engineering/on_call_handbook.pdf
+  title: On-Call Handbook
+  doc_id: ENG-HBK-001
+  department: Engineering
+  doc_type: handbook
+  visibility: department
+  min_role: member
+  version: '2.0'
+  effective_date: '2026-03-01'
+  expiration_date: null
+  owner: Engineering
+- file: sales/discount_approval_policy.docx
+  title: Discount Approval Policy
+  doc_id: SAL-POL-001
+  department: Sales
+  doc_type: policy
+  visibility: department
+  min_role: manager
+  version: '1.4'
+  effective_date: '2026-01-01'
+  expiration_date: null
+  owner: Sales
+- file: sales/sales_commission_plan.pdf
+  title: Sales Commission Plan
+  doc_id: SAL-POL-002
+  department: Sales
+  doc_type: policy
+  visibility: department
+  min_role: member
+  version: '2.0'
+  effective_date: '2026-04-01'
+  expiration_date: null
+  owner: Sales
