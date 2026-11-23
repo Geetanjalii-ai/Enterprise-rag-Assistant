@@ -1,0 +1,45 @@
+:root {
+  /* Canvas & Surfaces */
+  --bg: #FAFAFA;
+  --surface: #FFFFFF;
+  --surface-muted: #F4F4F5;
+
+  /* Hairline Borders */
+  --border: #E7E7EA;
+  --border-strong: #D4D4D8;
+
+  /* Typography */
+  --text: #0F1115;
+  --text-muted: #6B7280;
+  --text-subtle: #9CA3AF;
+
+  /* Ink Primary */
+  --ink: #0F1115;
+  --ink-hover: #1D2026;
+
+  /* Pastel System */
+  --pastel-lavender-bg: #E9E4FA;
+  --pastel-lavender-text: #4B3FA0;
+
+  --pastel-sky-bg: #E0EEFB;
+  --pastel-sky-text: #1E5A8C;
+
+  --pastel-mint-bg: #E0F3EA;
+  --pastel-mint-text: #1F6B49;
+
+  --pastel-peach-bg: #FCEBDD;
+  --pastel-peach-text: #8A4B1C;
+
+  --pastel-rose-bg: #FBE5E8;
+  --pastel-rose-text: #A3283C;
+
+  --pastel-amber-bg: #FBF0D3;
+  --pastel-amber-text: #85600A;
+
+  /* Focus & Elevation */
+  --focus-ring: #B9AEEA;
+  --drawer-shadow: 0 8px 24px rgba(15, 17, 21, 0.08);
+
+  /* Chat Greeting Glow */
+  --chat-glow: radial-gradient(60% 50% at 50% 30%, #E9E4FA 0%, rgba(233, 228, 250, 0) 70%);
+}
