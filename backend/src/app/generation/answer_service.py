@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from typing import Any, Dict, List
-from uuid import UUID
 
 from langchain_core.output_parsers import StrOutputParser
 from sqlalchemy.orm import Session
@@ -54,7 +53,7 @@ class AnswerService:
             abstain_msg = "I do not have access to that information in the company documents available to your role."
             log_rag_query(
                 db=self.db,
-                user_id=UUID(str(user.id)),
+                user_id=user.id,  # type: ignore[arg-type]
                 question=question,
                 chunk_ids=[],
                 outcome="no_authorized_context",
@@ -75,10 +74,32 @@ class AnswerService:
         response_text = ""
         model_used = self.settings.GROQ_MODEL
 
+        user_name = getattr(user, "full_name", "") or getattr(user, "email", "Employee")
+        user_email = getattr(user, "email", "employee@company.com")
+        memberships = getattr(user, "memberships", []) or []
+        user_dept = memberships[0].department.name if memberships and getattr(memberships[0], "department", None) else "General"
+        max_role_level = max([getattr(m, "role_level", 1) for m in memberships], default=1)
+        user_role = (
+            "Department Head"
+            if max_role_level >= 3
+            else ("Manager" if max_role_level == 2 else "Member")
+        )
+        is_admin_str = "Yes (System Administrator)" if getattr(user, "is_admin", False) else "No"
+
+        prompt_inputs = {
+            "context": context_str,
+            "question": question,
+            "user_name": user_name,
+            "user_email": user_email,
+            "user_department": user_dept,
+            "user_role": user_role,
+            "is_admin": is_admin_str,
+        }
+
         try:
             primary_llm = get_chat_model(temperature=0.0, model_name=self.settings.GROQ_MODEL)
             lcel_chain = self.prompt_template | primary_llm | StrOutputParser()
-            response_text = lcel_chain.invoke({"context": context_str, "question": question})
+            response_text = lcel_chain.invoke(prompt_inputs)
         except Exception as e:
             logger.warning(
                 f"Primary model {self.settings.GROQ_MODEL} failed, invoking fallback {self.settings.GROQ_FALLBACK_MODEL}: {e}"
@@ -86,20 +107,31 @@ class AnswerService:
             try:
                 fallback_llm = get_chat_model(temperature=0.0, model_name=self.settings.GROQ_FALLBACK_MODEL)
                 fallback_chain = self.prompt_template | fallback_llm | StrOutputParser()
-                response_text = fallback_chain.invoke({"context": context_str, "question": question})
+                response_text = fallback_chain.invoke(prompt_inputs)
                 model_used = self.settings.GROQ_FALLBACK_MODEL
             except Exception as fe:
                 logger.error(f"Fallback model also failed: {fe}")
                 raise RuntimeError(f"Both primary and fallback LLM failed: {fe}") from fe
 
-        # 5. Extract citations
-        citations = extract_citations(response_text, sources)
-        outcome = "answered" if citations or "I do not have access" not in response_text else "abstention"
+        # 5. Extract citations and determine outcome
+        is_abstain = any(
+            phrase in response_text.lower()
+            for phrase in ["not have access", "cannot display", "confidential and restricted", "no access", "restricted to authorized"]
+        )
+        if is_abstain:
+            outcome = "abstention"
+            citations = []
+            standard_msg = "I do not have access to that information in the company documents available to your role."
+            if standard_msg not in response_text:
+                response_text = f"{standard_msg}\n\n{response_text}"
+        else:
+            citations = extract_citations(response_text, sources)
+            outcome = "answered" if citations else "not_found"
 
         # 6. SEC-8: Append-only audit logging
         log_rag_query(
             db=self.db,
-            user_id=UUID(str(user.id)),
+            user_id=user.id,  # type: ignore[arg-type]
             question=question,
             chunk_ids=chunk_ids,
             outcome=outcome,
