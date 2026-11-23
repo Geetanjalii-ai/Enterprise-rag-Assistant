@@ -33,9 +33,20 @@ class Settings(BaseSettings):
 
     # LLM
     GROQ_API_KEY: str = ""
-    GROQ_MODEL: str = "llama-3.3-70b-versatile"
-    GROQ_FALLBACK_MODEL: str = "llama-3.1-8b-instant"
+    GROQ_MODEL: str = "qwen/qwen3.8-27b"
+    GROQ_FALLBACK_MODEL: str = "qwen/qwen3.8-27b"
     LLM_CONTEXT_TOKEN_BUDGET: int = 3000
+    GUARD_MODEL_NAME: str = "openai/gpt-oss-safeguard-20b"
+    PROMPT_GUARD_MODEL: str = "meta-llama/llama-prompt-guard-2-86m"
+    ENABLE_GUARDRAILS: bool = True
+
+    # LangSmith Observability & Tracing
+    LANGSMITH_TRACING: bool = True
+    LANGSMITH_ENDPOINT: str = "https://api.smith.langchain.com"
+    LANGSMITH_API_KEY: str = ""
+    LANGSMITH_PROJECT: str = "tracy-development"
+    LANGSMITH_AGENT_ID: str = "tracy"
+    LANGSMITH_AGENT_ENVIRONMENT: str = "local"
 
     # File storage (Backblaze B2, S3-compatible)
     STORAGE_BACKEND: str = "b2"  # b2 or local
