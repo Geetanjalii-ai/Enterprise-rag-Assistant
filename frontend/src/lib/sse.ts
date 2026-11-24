@@ -2,7 +2,7 @@ import { getAccessToken } from "./auth";
 
 const getBaseUrl = (): string => {
   const envUrl = import.meta.env.VITE_API_BASE_URL;
-  if (envUrl) {
+  if (envUrl !== undefined && envUrl !== null) {
     if (typeof window !== "undefined" && window.location.hostname === "127.0.0.1") {
       return envUrl.replace("localhost", "127.0.0.1");
     }

@@ -25,3 +25,9 @@ class LocalStorageProvider(StorageProvider):
 
     def file_exists(self, storage_key: str) -> bool:
         return (self.base_dir / storage_key).exists()
+
+    def download_file(self, storage_key: str) -> bytes:
+        target_path = self.base_dir / storage_key
+        if not target_path.exists():
+            raise FileNotFoundError(f"Local storage file not found: {storage_key}")
+        return target_path.read_bytes()

@@ -148,6 +148,21 @@ async def stream_chat_rag(
     db.add(user_msg)
     db.commit()
 
+    # 2b. Retrieve prior conversation history for multi-turn continuity
+    prior_messages = (
+        db.query(Message)
+        .filter(Message.conversation_id == conversation_id, Message.id != user_msg.id)
+        .order_by(Message.created_at.asc())
+        .all()
+    )
+    recent_history = prior_messages[-6:] if len(prior_messages) > 6 else prior_messages
+    history_lines = []
+    for m in recent_history:
+        speaker = "Employee" if m.role == "user" else "Assistant"
+        clean_content = m.content[:450] + ("..." if len(m.content) > 450 else "")
+        history_lines.append(f"{speaker}: {clean_content}")
+    chat_history_str = "\n".join(history_lines) if history_lines else "No previous conversation history."
+
     is_identity_query = any(
         kw in question.lower()
         for kw in ["who am i", "my role", "my department", "what is my name", "what do i do", "who are you"]
@@ -211,8 +226,17 @@ async def stream_chat_rag(
         app_log("INFO", "retrieval.acl_catalog", f"Loaded authoritative policy directory for {user_role}: {len(auth_docs)} documents")
     else:
         # Retrieve role-aware context (SEC-1 + SEC-2) with limit=8
+        # If question has referential pronouns (e.g. "it", "that", "this"), include last user context in search query
+        search_query = question
+        if recent_history:
+            last_user_turn = next((m.content for m in reversed(recent_history) if m.role == "user"), None)
+            ref_words = ["it", "that", "this", "they", "them", "these", "those", "version", "extension", "rules", "more", "details", "why", "who", "where", "how"]
+            q_lower_words = set(question.lower().split())
+            if last_user_turn and (any(w in q_lower_words for w in ref_words) or len(q_lower_words) <= 5):
+                search_query = f"{last_user_turn} {question}"
+
         app_log("INFO", "retrieval.embeddings", f"Generating dense & sparse embeddings via '{settings.EMBEDDING_MODEL}'")
-        retrieved_items = search_service.search(query=question, user=user, limit=8)
+        retrieved_items = search_service.search(query=search_query, user=user, limit=8)
         app_log("INFO", "retrieval.hybrid_search", f"Retrieved {len(retrieved_items)} role-verified context chunks from Qdrant Cloud")
 
         # 3. Handle cases where no authorized documents exist
@@ -271,6 +295,7 @@ async def stream_chat_rag(
 
     prompt_inputs = {
         "context": context_str,
+        "chat_history": chat_history_str,
         "question": question,
         "user_name": user_name,
         "user_email": user_email,

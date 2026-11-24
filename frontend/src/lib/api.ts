@@ -7,7 +7,7 @@ export const setAccessToken = (token: string | null) => {
 
 const getBaseUrl = (): string => {
   const envUrl = import.meta.env.VITE_API_BASE_URL;
-  if (envUrl) {
+  if (envUrl !== undefined && envUrl !== null) {
     if (typeof window !== "undefined" && window.location.hostname === "127.0.0.1") {
       return envUrl.replace("localhost", "127.0.0.1");
     }
@@ -39,7 +39,9 @@ export async function apiFetch<T>(endpoint: string, options: RequestInit = {}): 
   }
 
   // Ensure JSON Content-Type unless multipart
-  if (!(options.body instanceof FormData) && !headers.has("Content-Type")) {
+  if (options.body instanceof FormData) {
+    headers.delete("Content-Type");
+  } else if (!headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
 

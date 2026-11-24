@@ -8,7 +8,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Drawer } from '../../components/ui/Drawer';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
-import { Search, Upload, RefreshCw, Archive, FileText, ShieldCheck, Tag, Calendar, Eye } from 'lucide-react';
+import { Search, Upload, RefreshCw, Archive, FileText, ShieldCheck, Tag, Calendar, Eye, RotateCcw } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -46,6 +46,7 @@ export const DocumentsPage: React.FC = () => {
   const [uploadDept, setUploadDept] = useState('HR');
   const [visibility, setVisibility] = useState('department');
   const [minRole, setMinRole] = useState('member');
+  const [docVersion, setDocVersion] = useState('1.0');
   const [isUploading, setIsUploading] = useState(false);
 
   const { data: documents = [], isLoading } = useQuery<DocumentItem[]>({
@@ -66,12 +67,47 @@ export const DocumentsPage: React.FC = () => {
     mutationFn: async (id: string) => {
       await api.post(`/admin/documents/${id}/archive`);
     },
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ['admin-documents'] });
-      toast.success('Document archived');
-      if (selectedDoc) {
+      toast.success('Document archived successfully');
+      if (selectedDoc && selectedDoc.id === id) {
         setSelectedDoc((prev) => (prev ? { ...prev, status: 'archived' } : null));
       }
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.detail || 'Failed to archive document');
+    },
+  });
+
+  const unarchiveMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await api.post(`/admin/documents/${id}/unarchive`);
+    },
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-documents'] });
+      toast.success('Document restored to active status');
+      if (selectedDoc && selectedDoc.id === id) {
+        setSelectedDoc((prev) => (prev ? { ...prev, status: 'active' } : null));
+      }
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.detail || 'Failed to restore document');
+    },
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      await api.patch(`/admin/documents/${id}`, { status });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-documents'] });
+      toast.success(`Document status updated to ${variables.status}`);
+      if (selectedDoc && selectedDoc.id === variables.id) {
+        setSelectedDoc((prev) => (prev ? { ...prev, status: variables.status as any } : null));
+      }
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.detail || 'Failed to update document status');
     },
   });
 
@@ -80,7 +116,11 @@ export const DocumentsPage: React.FC = () => {
       await api.post(`/admin/documents/${id}/reingest`);
     },
     onSuccess: () => {
-      toast.success('Document scheduled for vector re-indexing');
+      queryClient.invalidateQueries({ queryKey: ['admin-documents'] });
+      toast.success('Document successfully re-indexed in vector search');
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.detail || 'Re-index failed');
     },
   });
 
@@ -103,17 +143,16 @@ export const DocumentsPage: React.FC = () => {
     formData.append('department', uploadDept);
     formData.append('visibility', visibility);
     formData.append('min_role_level', String(roleLevelMap[minRole] || 1));
-    formData.append('version', '1.0');
+    formData.append('version', docVersion.trim() || '1.0');
 
     setIsUploading(true);
     try {
-      await api.post('/admin/documents', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      await api.post('/admin/documents', formData);
       toast.success('Document uploaded and queued for indexing');
       setIsUploadOpen(false);
       setFile(null);
       setTitle('');
+      setDocVersion('1.0');
       queryClient.invalidateQueries({ queryKey: ['admin-documents'] });
     } catch (err: any) {
       toast.error(err.response?.data?.detail || 'Upload failed');
@@ -175,7 +214,27 @@ export const DocumentsPage: React.FC = () => {
     {
       header: 'Status',
       accessorKey: 'status',
-      cell: (doc) => <Badge variant="status" status={doc.status}>{doc.status}</Badge>,
+      cell: (doc) => (
+        <select
+          value={doc.status}
+          onChange={(e) => {
+            e.stopPropagation();
+            updateStatusMutation.mutate({ id: doc.id, status: e.target.value });
+          }}
+          className={`text-[12px] font-medium px-2 py-0.5 rounded-md border cursor-pointer transition-colors ${
+            doc.status === 'active'
+              ? 'bg-[var(--pastel-mint-bg)] text-[var(--pastel-mint-text)] border-emerald-200'
+              : doc.status === 'archived'
+              ? 'bg-[var(--surface-muted)] text-[var(--text-subtle)] border-gray-200'
+              : 'bg-[var(--pastel-peach-bg)] text-[var(--pastel-peach-text)] border-amber-200'
+          }`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <option value="active">Active</option>
+          <option value="archived">Archived</option>
+          <option value="quarantined">Quarantined</option>
+        </select>
+      ),
     },
     {
       header: 'Actions',
@@ -197,14 +256,29 @@ export const DocumentsPage: React.FC = () => {
           >
             <RefreshCw size={14} />
           </Button>
-          {doc.status !== 'archived' && (
+          {doc.status !== 'archived' ? (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => archiveMutation.mutate(doc.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                archiveMutation.mutate(doc.id);
+              }}
               title="Archive document"
             >
               <Archive size={14} className="text-[var(--pastel-rose-text)]" />
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                unarchiveMutation.mutate(doc.id);
+              }}
+              title="Restore to Active"
+            >
+              <RotateCcw size={14} className="text-[var(--pastel-mint-text)]" />
             </Button>
           )}
         </div>
@@ -325,6 +399,20 @@ export const DocumentsPage: React.FC = () => {
                   </span>
                 </div>
               </div>
+
+              {/* Status Control */}
+              <div className="pt-3 border-t border-[var(--border)] flex items-center justify-between">
+                <span className="text-[13px] font-medium text-[var(--text)]">Change Status:</span>
+                <select
+                  value={selectedDoc.status}
+                  onChange={(e) => updateStatusMutation.mutate({ id: selectedDoc.id, status: e.target.value })}
+                  className="text-[13px] font-medium px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] cursor-pointer"
+                >
+                  <option value="active">Active (Indexed)</option>
+                  <option value="archived">Archived (De-indexed)</option>
+                  <option value="quarantined">Quarantined</option>
+                </select>
+              </div>
             </div>
 
             <div className="space-y-3">
@@ -340,7 +428,7 @@ export const DocumentsPage: React.FC = () => {
                   <RefreshCw size={15} />
                   Re-index chunks into Vector Search (Qdrant)
                 </Button>
-                {selectedDoc.status !== 'archived' && (
+                {selectedDoc.status !== 'archived' ? (
                   <Button
                     variant="destructive-outline"
                     className="w-full justify-start gap-2"
@@ -348,6 +436,15 @@ export const DocumentsPage: React.FC = () => {
                   >
                     <Archive size={15} />
                     Archive this document from active retrieval
+                  </Button>
+                ) : (
+                  <Button
+                    variant="secondary"
+                    className="w-full justify-start gap-2 text-emerald-600 hover:text-emerald-700"
+                    onClick={() => unarchiveMutation.mutate(selectedDoc.id)}
+                  >
+                    <RotateCcw size={15} />
+                    Restore document to Active & re-index vectors
                   </Button>
                 )}
               </div>
@@ -386,6 +483,14 @@ export const DocumentsPage: React.FC = () => {
             placeholder="Document title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            required
+          />
+
+          <Input
+            label="Version"
+            placeholder="e.g. 1.0 or 2.0"
+            value={docVersion}
+            onChange={(e) => setDocVersion(e.target.value)}
             required
           />
 

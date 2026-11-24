@@ -1,0 +1,24 @@
+# Test Manifest for Versioning Ingestion Testing
+- file: vpn_setup_guide_v2.0.md
+  title: VPN Setup Guide
+  doc_id: IT-HOW-002
+  department: IT
+  doc_type: guide
+  visibility: company
+  min_role: member
+  version: '2.0'
+  effective_date: '2026-11-01'
+  expiration_date: null
+  owner: Information Technology
+
+- file: code_review_guidelines_v2.0.md
+  title: Code Review Guidelines
+  doc_id: ENG-GDE-001
+  department: Engineering
+  doc_type: guideline
+  visibility: department
+  min_role: member
+  version: '2.0'
+  effective_date: '2026-11-15'
+  expiration_date: null
+  owner: Engineering

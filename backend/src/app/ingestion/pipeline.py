@@ -1,3 +1,4 @@
+import tempfile
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -270,3 +271,130 @@ class IngestionPipeline:
         }
         self.db.commit()
         return job
+
+    def ingest_document_file(self, doc: Document, file_path: Path) -> int:
+        """
+        Chunks, embeds, stores chunks in Neon DB, and upserts dense + sparse vectors to Qdrant.
+        Also archives older active versions of the same title/dept to avoid stale retriever context.
+        """
+        import re
+
+        def normalize_title(t: str) -> str:
+            # Strip version pattern like v1.0, v2.0, _v2.0, -v2.0, (v2.0)
+            cleaned = re.sub(r'[\s_\-\(\[]*v?\d+(\.\d+)?[\)\]]*$', '', t, flags=re.IGNORECASE)
+            return re.sub(r'[_\-\s]+', ' ', cleaned).strip().lower()
+
+        target_normalized = normalize_title(doc.title)
+
+        # Archive older active versions of this document in the same department
+        all_dept_docs = (
+            self.db.query(Document)
+            .filter(
+                Document.department_id == doc.department_id,
+                Document.id != doc.id,
+                Document.status == "active",
+            )
+            .all()
+        )
+        for old_d in all_dept_docs:
+            if old_d.title == doc.title or normalize_title(old_d.title) == target_normalized:
+                old_d.status = "archived"  # type: ignore[assignment]
+                try:
+                    self.vector_store.delete_by_document_id(str(old_d.id))
+                except Exception as e:
+                    logger.warning(f"Failed to delete Qdrant vectors for auto-archived doc: {e}")
+                self.db.query(Chunk).filter(Chunk.document_id == old_d.id).update({"index_status": "archived"})
+                logger.info(f"Auto-archived prior version '{old_d.title}' (v{old_d.version}) in favour of new active version v{doc.version}")
+
+        # Clear existing vectors and chunks for this document
+        try:
+            self.vector_store.delete_by_document_id(str(doc.id))
+        except Exception:
+            pass
+        self.db.query(Chunk).filter(Chunk.document_id == doc.id).delete()
+        self.db.flush()
+
+        raw_docs = load_documents_with_langchain(file_path)
+        for d in raw_docs:
+            d.page_content = clean_text(d.page_content)
+
+        chunks: List[TextChunk] = self.chunker.chunk_langchain_documents(raw_docs)
+        if not chunks:
+            logger.warn(f"Document {doc.title} produced 0 chunks after parsing")
+            return 0
+
+        eff_ts = int(doc.effective_date.timestamp()) if doc.effective_date else 0
+        exp_ts = int(doc.expiration_date.timestamp()) if doc.expiration_date else 253402300799
+
+        chunk_texts = [c.text for c in chunks]
+        dense_vectors = self.embedding_provider.embed_documents(chunk_texts)
+        sparse_vectors = self.sparse_provider.embed_documents(chunk_texts)
+
+        qdrant_points = []
+        for i, c in enumerate(chunks):
+            point_id = str(uuid.uuid4())
+            db_chunk = Chunk(
+                document_id=doc.id,
+                chunk_index=c.chunk_index,
+                text=c.text,
+                section=c.section,
+                page_start=c.page_start,
+                page_end=c.page_end,
+                token_count=c.token_count,
+                embedding_model=self.settings.EMBEDDING_MODEL,
+                embedding_dim=self.settings.EMBEDDING_DIM,
+                index_status="pending",
+                qdrant_point_id=point_id,
+            )
+            self.db.add(db_chunk)
+            self.db.flush()
+
+            qdrant_points.append(
+                {
+                    "id": point_id,
+                    "dense": dense_vectors[i],
+                    "sparse": sparse_vectors[i],
+                    "payload": {
+                        "chunk_id": str(db_chunk.id),
+                        "document_id": str(doc.id),
+                        "department_id": str(doc.department_id),
+                        "visibility": doc.visibility,
+                        "min_role_level": doc.min_role_level,
+                        "status": doc.status,
+                        "effective_ts": eff_ts,
+                        "expiry_ts": exp_ts,
+                        "version": doc.version,
+                        "doc_title": doc.title,
+                        "section": c.section,
+                        "page_start": c.page_start,
+                        "page_end": c.page_end,
+                        "text": c.text,
+                    },
+                }
+            )
+
+        self.vector_store.upsert_points(qdrant_points)
+        self.db.query(Chunk).filter(Chunk.document_id == doc.id).update({"index_status": "indexed"})
+        self.db.commit()
+        logger.info(f"Successfully indexed document '{doc.title}' ({len(chunks)} chunks, vectors synced)")
+        return len(chunks)
+
+    def reingest_document(self, doc: Document) -> int:
+        """Download file from storage, re-parse, and re-embed chunks into vector store."""
+        if not doc.storage_key:
+            raise ValueError(f"Document {doc.id} has no storage_key")
+
+        file_bytes = self.storage.download_file(doc.storage_key)
+        ext = Path(doc.storage_key).suffix or ".txt"
+        with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp:
+            tmp.write(file_bytes)
+            tmp_path = Path(tmp.name)
+
+        try:
+            return self.ingest_document_file(doc, tmp_path)
+        finally:
+            if tmp_path.exists():
+                try:
+                    tmp_path.unlink()
+                except Exception:
+                    pass

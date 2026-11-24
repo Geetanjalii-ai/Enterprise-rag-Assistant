@@ -45,3 +45,9 @@ class B2StorageProvider(StorageProvider):
             return True
         except Exception:
             return False
+
+    def download_file(self, storage_key: str) -> bytes:
+        import io
+        buf = io.BytesIO()
+        self.s3_client.download_fileobj(self.bucket, storage_key, buf)
+        return buf.getvalue()

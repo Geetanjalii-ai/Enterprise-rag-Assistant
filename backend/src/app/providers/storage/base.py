@@ -17,3 +17,8 @@ class StorageProvider(ABC):
     def file_exists(self, storage_key: str) -> bool:
         """Check if a file exists in storage."""
         pass
+
+    @abstractmethod
+    def download_file(self, storage_key: str) -> bytes:
+        """Download and return raw file bytes from storage."""
+        pass

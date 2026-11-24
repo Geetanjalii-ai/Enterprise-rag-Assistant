@@ -22,10 +22,7 @@ export const AdminLayout: React.FC = () => {
     { to: '/admin/users', label: 'Users & Roles', icon: Users },
     { to: '/admin/monitoring', label: 'Monitoring & Logs', icon: Activity },
     { to: '/admin/audit', label: 'Audit Log', icon: Shield },
-  ];
-
-  const phase4Items = [
-    { label: 'Settings', icon: Settings },
+    { to: '/admin/settings', label: 'Settings', icon: Settings },
   ];
 
   return (
@@ -67,28 +64,6 @@ export const AdminLayout: React.FC = () => {
                 </NavLink>
               );
             })}
-
-            {/* Phase 4 disabled items */}
-            <div className="pt-4 mt-4 border-t border-[var(--border)]">
-              <span className="px-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-subtle)] block mb-1">
-                Upcoming (Phase 4)
-              </span>
-              {phase4Items.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <div
-                    key={item.label}
-                    className="flex items-center justify-between px-3 py-2 text-[13px] text-[var(--text-subtle)] opacity-60 cursor-not-allowed"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Icon size={16} strokeWidth={1.5} />
-                      <span>{item.label}</span>
-                    </div>
-                    <span className="text-[10px] bg-[var(--surface-muted)] px-1.5 py-0.5 rounded">Soon</span>
-                  </div>
-                );
-              })}
-            </div>
           </nav>
         </div>
 

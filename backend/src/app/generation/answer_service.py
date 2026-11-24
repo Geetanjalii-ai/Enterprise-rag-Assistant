@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from langchain_core.output_parsers import StrOutputParser
 from sqlalchemy.orm import Session
@@ -37,6 +37,7 @@ class AnswerService:
         question: str,
         user: User,
         top_k: int = 5,
+        chat_history: Optional[str] = None,
     ) -> RAGAnswer:
         """Execute end-to-end role-aware RAG pipeline:
 
@@ -88,6 +89,7 @@ class AnswerService:
 
         prompt_inputs = {
             "context": context_str,
+            "chat_history": chat_history or "No previous conversation history.",
             "question": question,
             "user_name": user_name,
             "user_email": user_email,

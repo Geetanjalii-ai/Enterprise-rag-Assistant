@@ -9,6 +9,7 @@ import { QuarantinePage } from '../features/admin/QuarantinePage';
 import { UsersPage } from '../features/admin/UsersPage';
 import { AuditPage } from '../features/admin/AuditPage';
 import { MonitoringPage } from '../features/admin/MonitoringPage';
+import { SettingsPage } from '../features/admin/SettingsPage';
 import { ProtectedRoute } from './ProtectedRoute';
 import { AdminRoute } from './AdminRoute';
 
@@ -72,6 +73,10 @@ export const router = createBrowserRouter([
               {
                 path: 'monitoring',
                 element: <MonitoringPage />,
+              },
+              {
+                path: 'settings',
+                element: <SettingsPage />,
               },
             ],
           },
