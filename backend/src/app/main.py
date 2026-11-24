@@ -43,6 +43,17 @@ app.add_middleware(
 app.include_router(api_v1_router)
 
 
+@app.get("/")
+def root():
+    return {
+        "service": "Enterprise RAG Assistant API",
+        "status": "online",
+        "docs": "/docs",
+        "health": "/health",
+        "version": "0.3.0",
+    }
+
+
 @app.get("/health")
 def health():
     return {"status": "ok", "app_env": settings.APP_ENV}
